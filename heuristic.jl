@@ -51,7 +51,7 @@ function compute_paths_through_e(instance::Instance, e::Tuple{Int, Int}, taxes::
                 next_dist = dijkstra_shortest_paths(instance.g, ori, adj_mat).dists[des]
                 adj_mat[e[1], e[2]] = cost
                 # the maximum tax is the gap between the cost of the second best path and the first one
-                paths_through_e[e] = next_dist - dist
+                paths_through_e[(ori, des)] = next_dist - dist
             end
         end
     end

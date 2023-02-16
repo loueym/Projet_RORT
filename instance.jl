@@ -1,6 +1,6 @@
 # Instance object and related functions
 
-using LightGraphs, SimpleWeightedGraphs
+using Graphs, SimpleWeightedGraphs
 
 struct Instance
     # Commodity parameters
@@ -16,7 +16,7 @@ struct Instance
     A1 :: Dict{Tuple{Int, Int}, Float64}
     n_A2 :: Int
     A2 :: Dict{Tuple{Int, Int}, Float64}
-    g :: SimpleWeightedDiGraph{Int64,Float64}
+    g # :: SimpleWeightedDiGraph{Int64,Float64}
 
     function Instance(K, n_k, n, A_1, A_2)
         k = size(K)[2]
@@ -88,17 +88,17 @@ function build_graph(n, dict_A1, dict_A2)
         end
         adj_matrix[e[1], e[2]] = cost
     end
-    g = SimpleWeightedDiGraph(adj_matrix)
-    for i in 1:n
-        for j in i+1:n
-            if adj_matrix[i, j] == inf
-                rem_edge!(g, i, j)
-            end
-            if adj_matrix[j, i] == 1000000
-                rem_edge!(g, j, i)
-            end
-        end
-    end
+    g = DiGraph(adj_matrix)
+    # for i in 1:n
+    #     for j in i+1:n
+    #         if adj_matrix[i, j] == inf
+    #             rem_edge!(g, i, j)
+    #         end
+    #         if adj_matrix[j, i] == 1000000
+    #             rem_edge!(g, j, i)
+    #         end
+    #     end
+    # end
     return g
 end
 
