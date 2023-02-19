@@ -16,7 +16,7 @@ struct Instance
     A1 :: Dict{Tuple{Int, Int}, Float64}
     n_A2 :: Int
     A2 :: Dict{Tuple{Int, Int}, Float64}
-    g # :: SimpleWeightedDiGraph{Int64,Float64}
+    g :: SimpleDiGraph{Int64}
 
     function Instance(K, n_k, n, A_1, A_2)
         k = size(K)[2]
@@ -73,32 +73,13 @@ end
 
 function build_graph(n, dict_A1, dict_A2)
     adj_matrix = zeros(n, n)
-    eps = 0.0001
-    inf = 1000000
-    inf_mat(adj_matrix, inf)
     for (e, cost) in dict_A1
-        if cost == 0
-            cost = eps
-        end
-        adj_matrix[e[1], e[2]] = cost
+        adj_matrix[e[1], e[2]] = 1
     end
     for (e, cost) in dict_A2
-        if cost == 0
-            cost = eps
-        end
-        adj_matrix[e[1], e[2]] = cost
+        adj_matrix[e[1], e[2]] = 1
     end
     g = DiGraph(adj_matrix)
-    # for i in 1:n
-    #     for j in i+1:n
-    #         if adj_matrix[i, j] == inf
-    #             rem_edge!(g, i, j)
-    #         end
-    #         if adj_matrix[j, i] == 1000000
-    #             rem_edge!(g, j, i)
-    #         end
-    #     end
-    # end
     return g
 end
 

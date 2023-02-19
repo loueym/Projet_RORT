@@ -1,4 +1,4 @@
-include("data/taxe_grille_5x6.txt")
+include("data/taxe_grille_7x11.txt")
 include("heuristic.jl")
 
 test_instance = Instance(K, n_k, n, A_1, A_2)
@@ -17,6 +17,6 @@ test_instance = Instance(K, n_k, n, A_1, A_2)
 # dijk_enum = enumerate_paths(dijkstra_shortest_paths(g, 2, build_adj_mat(n, test_instance.A1, test_instance.A2)), 8)
 # println(dijk_enum)
 
-println("Value before heuristic: ", compute_obj_value(test_instance, zeros(n, n)))
 value, taxes = heuristic(test_instance)
 println("Value after heuristic: ", value)
+show_positive_taxes(taxes)
