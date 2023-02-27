@@ -34,7 +34,7 @@ end
 function compute_paths_through_a(instance::Instance, arc::Tuple{Int, Int}, taxes::Array{Float64, 2})::Dict{}
     # returns a dictionnary with couples (origin, destination) as keys, and the max tax for (ori, des) on the arc as value
     inf = 100000
-    adj_mat = build_adj_mat(instance.n, instance.A1, instance.A2, taxes)
+    adj_mat = build_dist_mat(instance.n, instance.A1, instance.A2, taxes)
     paths_through_a = Dict{}()
     for i in 1:instance.K
         ori = instance.origins[i]
@@ -63,7 +63,7 @@ end
 function compute_obj_value(instance::Instance, taxes::Array{Float64, 2}, show_result::Bool)
     val = 0
     n = instance.n
-    adj_mat = build_adj_mat(n, instance.A1, instance.A2, taxes)
+    adj_mat = build_dist_mat(n, instance.A1, instance.A2, taxes)
     for i in 1:instance.K
         ori = instance.origins[i]
         des = instance.destinations[i]

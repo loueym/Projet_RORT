@@ -2,6 +2,10 @@
 
 using Graphs, SimpleWeightedGraphs
 
+const EPS = 1e-5
+const INF = 1e6
+const INF_TAX = 1e4
+
 struct Instance
     # Commodity parameters
     K :: Int
@@ -19,7 +23,7 @@ struct Instance
     g :: SimpleDiGraph{Int64}
 
     function Instance(K, n_k, n, A_1, A_2)
-        k = size(K)[2]
+        k = size(K)[1]
         origins = K[:,1]
         destinations = K[:,2]
         dict_A1 = matrix_to_dict(A_1)
@@ -29,6 +33,7 @@ struct Instance
         new(k, origins, destinations, n_k, T_max, n, length(dict_A1), dict_A1, length(dict_A2), dict_A2, g)
     end
 end
+
 
 function Base.show(io::IO, instance::Instance)
     println("Instance : ")
@@ -52,6 +57,7 @@ function Base.show(io::IO, instance::Instance)
     println()
 end
 
+
 function matrix_to_dict(matrix::Matrix{Int})
     dict = Dict{Tuple{Int, Int}, Float64}()
     for i in 1:length(matrix[:,1])
@@ -59,15 +65,6 @@ function matrix_to_dict(matrix::Matrix{Int})
         dict[i,j] = k
     end
     return dict
-end
-
-function inf_mat(mat::Array{Float64, 2}, inf::Union{Float64,Int64})
-    n, m = size(mat)
-    for i in 1:n
-        for j in 1:m
-            mat[i, j] = inf
-        end
-    end
 end
 
 
@@ -84,27 +81,26 @@ function build_graph(n, dict_A1, dict_A2)
 end
 
 
-function build_adj_mat(n::Int64, dict_A1, dict_A2, taxes::Array{Float64, 2})::Array{Float64, 2}
-    adj_matrix = zeros(n, n)
-    inf = 1000000
-    inf_mat(adj_matrix, inf)
+function build_dist_mat(n::Int64, dict_A1, dict_A2, taxes::Matrix) :: Matrix
+    dist_matrix = INF .* ones(n, n)
     for (e, cost) in dict_A1
-        adj_matrix[e[1], e[2]] = cost + taxes[e[1], e[2]]
+        dist_matrix[e[1], e[2]] = cost + taxes[e[1], e[2]]
     end
     for (e, cost) in dict_A2
-        adj_matrix[e[1], e[2]] = cost
+        dist_matrix[e[1], e[2]] = cost
     end
-    return adj_matrix
+    return dist_matrix
 end
 
 
 function compute_t_max(K, n_k, n, dict_A1, dict_A2, g)
-    T_max = Vector{Float64}([0 for i in 1:n])
-    inf_taxes = zeros(n, n)
-    inf_mat(inf_taxes, 10000)
-    adj_mat = build_adj_mat(n, dict_A1, dict_A2, zeros(n, n))
-    adj_mat_taxes = build_adj_mat(n, dict_A1, dict_A2, inf_taxes)
-    k = size(K)[2]
+    k = size(K)[1]
+    T_max = zeros(k)
+    inf_taxes = INF_TAX .* ones(n, n)
+
+    adj_mat = build_dist_mat(n, dict_A1, dict_A2, zeros(n, n))
+    adj_mat_taxes = build_dist_mat(n, dict_A1, dict_A2, inf_taxes)
+    
     for i in 1:k
         ori = K[i,1]
         des = K[i,2]
@@ -115,3 +111,8 @@ function compute_t_max(K, n_k, n, dict_A1, dict_A2, g)
     end
     return T_max
 end
+
+# Tests 
+# include("data/taxe_grille_7x11.txt")
+# test_instance = Instance(K, n_k, n, A_1, A_2)
+# println(test_instance)
