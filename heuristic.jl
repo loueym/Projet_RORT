@@ -60,7 +60,7 @@ function compute_paths_through_a(instance::Instance, arc::Tuple{Int, Int}, taxes
 end
 
 
-function compute_obj_value(instance::Instance, taxes::Array{Float64, 2}, show_result::Bool)
+function compute_obj_value(instance::Instance, taxes::Array{Float64, 2}, show_result::Bool=false)
     val = 0
     n = instance.n
     adj_mat = build_dist_mat(n, instance.A1, instance.A2, taxes)
