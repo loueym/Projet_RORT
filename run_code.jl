@@ -2,7 +2,7 @@ include("data/taxe_grille_7x11.txt")
 include("heuristic.jl")
 
 test_instance = Instance(K, n_k, n, A_1, A_2)
-# println(test_instance)
+println(test_instance)
 
 # g = test_instance.g
 # for i in 1:n
