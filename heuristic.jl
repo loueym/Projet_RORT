@@ -34,7 +34,9 @@ end
 function compute_paths_through_a(instance::Instance, arc::Tuple{Int, Int}, taxes::Array{Float64, 2})::Dict{}
     # returns a dictionnary with couples (origin, destination) as keys, and the max tax for (ori, des) on the arc as value
     n = instance.n
+    n = instance.n
     adj_mat = build_dist_mat(instance.n, instance.A1, instance.A2, taxes)
+    ad_mat_without_taxed_arcs = build_dist_mat(instance.n, instance.A1, instance.A2, INF .* ones(n, n))
     ad_mat_without_taxed_arcs = build_dist_mat(instance.n, instance.A1, instance.A2, INF .* ones(n, n))
     paths_through_a = Dict{}()
     for i in 1:instance.K
@@ -49,6 +51,9 @@ function compute_paths_through_a(instance::Instance, arc::Tuple{Int, Int}, taxes
             if index1 + 1 == index2
                 # if the shortest_path visits n2 right after n1, we add it to our list
                 dist = dijk.dists[des]
+                # cost, adj_mat[n1, n2] = adj_mat[n1, n2], inf
+                next_dist = dijkstra_shortest_paths(instance.g, ori, ad_mat_without_taxed_arcs).dists[des]
+                # adj_mat[n1, n2] = cost
                 # cost, adj_mat[n1, n2] = adj_mat[n1, n2], inf
                 next_dist = dijkstra_shortest_paths(instance.g, ori, ad_mat_without_taxed_arcs).dists[des]
                 # adj_mat[n1, n2] = cost
@@ -182,6 +187,9 @@ function heuristic(instance::Instance, verbose::Bool=false)
     # Undo the effect of epsilon
     clean_taxes(best_taxes)
     best_result = round(best_result)
+    clean_taxes(best_taxes)
+    best_result = round(best_result)
 
+    return best_result, best_taxes
     return best_result, best_taxes
 end
