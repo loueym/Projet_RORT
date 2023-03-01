@@ -149,27 +149,44 @@ function solve_milp_model!(instance::Instance, model::Model, compact::Bool=true)
         # end
         obj = JuMP.objective_value(model)
         println("Profit from taxes : $(obj)")
+        z_star = JuMP.value.(model[:z])
 
-        return vTaxes, obj
+        return vTaxes, obj, z_star
     end
+end
+
+
+function print_shortest_paths(z_star, instance::Instance)
+    # A, K = size(z_star)
+    # println(A, K)
+    println(z_star)
+    # for a in 1:A
+    #     if sum(z_star[a, :]) > 0
+    #         print("On arc ")
+    #     for k in 1:K
+
+    #     end
+    # end
 end
 
 # Test
 test_instance = Instance(K, n_k, n, A_1, A_2)
 println(test_instance)
-test_model = get_milp_model(test_instance)
-show(test_model)
-println()
-test_solution1, test_obj1 = solve_milp_model!(test_instance, test_model, false)
-println()
+# test_model = get_milp_model(test_instance)
+# show(test_model)
+# println()
+# test_solution1, test_obj1, test_z = solve_milp_model!(test_instance, test_model, false)
+# println()
 # println(test_solution)
 
 test_model = get_compact_model(test_instance)
 show(test_model)
 println()
-test_solution2, test_obj2 = solve_milp_model!(test_instance, test_model)
+test_solution2, test_obj2, test_z = solve_milp_model!(test_instance, test_model)
 println()
-# println(test_solution)
+println(test_solution2)
+println()
+# print_shortest_paths(test_z, test_instance)
 
 # test_model = get_milp_model(test_instance)
 # show(test_model)
