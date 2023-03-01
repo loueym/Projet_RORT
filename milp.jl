@@ -4,7 +4,7 @@ using JuMP
 using CPLEX
 
 include("utils.jl")
-include("data/taxe_grille_6x10.txt")
+include("data/taxe_grille_7x11.txt")
 
 function get_milp_model(instance::Instance)
     # Model

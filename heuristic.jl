@@ -130,7 +130,7 @@ function increase_taxes(instance::Instance, taxes::Array{Float64, 2})::Array{Flo
             current_tax = initial_tax + possible_taxes[iter] - eps 
             # we remove epsilon to make sure that given 2 paths with same cost, 
             # cliens will choose paths with taxes
-            if current_tax != previous_tax
+            if (current_tax < previous_tax - eps) || (current_tax > previous_tax + eps)
                 previous_obj = obj
                 taxes[n1, n2] = current_tax
                 obj = compute_obj_value(instance, taxes, false)
@@ -138,7 +138,7 @@ function increase_taxes(instance::Instance, taxes::Array{Float64, 2})::Array{Flo
                     # undo changes, because they worsened the objective
                     taxes[n1, n2] = previous_tax
                 else
-                    println("raising tax on arc (", n1, ", ", n2, ") from ", previous_tax, " to ", current_tax)
+                    println("raising tax on arc ($n1, $n2) from $(round(Int, previous_tax)) to $(round(Int, current_tax))")
                 end
             end
             iter += 1
@@ -158,15 +158,15 @@ function clean_taxes(taxes::Array{Float64, 2})
 end
 
 
-function heuristic(instance::Instance)
+function heuristic(instance::Instance, verbose::Bool=false)
     previous_val = 0
     n = instance.n
     taxes = increase_taxes(instance, zeros(n, n))
-    current_val = compute_obj_value(test_instance, taxes, true)
+    current_val = compute_obj_value(test_instance, taxes, verbose)
     while (current_val - previous_val)/current_val > 0.01
         previous_val = current_val
         taxes = increase_taxes(instance, taxes)
-        current_val = compute_obj_value(test_instance, taxes, true)
+        current_val = compute_obj_value(test_instance, taxes, verbose)
     end
 
     # Undo the effect of epsilon
