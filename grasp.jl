@@ -27,41 +27,70 @@ function local_search(instance::Instance, start_taxes::Matrix)
     println("Start Profit from Taxes : $(current_obj)")
     improvement = 1
     iteration = 1
+    tested = 1
 
     # While we improve our objective
     while improvement > 0
+        println("\nIteration $iteration \n")
         # We choose the first random (strictly) improving move
         for a in shuffle(taxable_arcs)
+            iteration += 1
             # For each taxable edge, a neighboor is the previous or next possible tax on this edge
             paths_through_a = compute_paths_through_a(instance, a, taxes)
             possible_taxes = sort!(unique(collect(values(paths_through_a))))
+            if length(possible_taxes) < 1
+                continue
+            end
+            println("Possible taxes on $a : $(round.(Int, possible_taxes))")
             # We get the position of our current tax in the possible taxes
-            current_tax = taxes[e[1], e[2]]
+            current_tax = round(taxes[a[1], a[2]])
+            println("Current tax on $a : $current_tax")
             current_idx = findfirst(item -> item >= current_tax, possible_taxes)
+            
+            # We construct the neighbors
+            neighbors = []
+            if current_idx === nothing 
+                # The current tax is superior to all values in possible taxes, the only neighbor is then the last value
+                push!(neighbors, length(possible_taxes))
+            else
+                if cuurent_idx == 1
+                    # The current tax is inferior to all values in possible taxes, the only neighbor is then the first value
+                    push!(neighbors, 1)
+                else
+                    # There are possible values inferior and superior to the current tax
+                    push!(neighbors, current_idx)
+                    push!(neighbors, current_idx - 1)
+                end
+            end
+
             # We now test both neighbors (if they exist)
-            neighbors = [current_idx + i for i in [-1,1] if (current_idx + i >= 1 && current_idx + i <= length(possible_taxes))]
+            # TODO : ADAPT FROM HERE
             for neighbor in neighbors
-                taxes[e[1], e[2]] = possible_taxes[neighbor]
+                taxes[a[1], a[2]] = possible_taxes[neighbor] - EPS
                 improvement = compute_obj_value(instance, taxes, false) - current_obj
+                println("Testing neighbor : tax $(possible_taxes[neighbor]) on arc $a with improvement $improvement")
                 if improvement <= 0
                     # Undo changes
-                    taxes[e[1], e[2]] = current_tax
+                    taxes[a[1], a[2]] = current_tax
                 else
                     # Update objective
                     current_obj += improvement
+                    println("Obj is now $current_obj")
                     # No need to check the other neighbor
                     break
                 end
-                iteration += 1
+                tested += 1
             end
             if improvement > 0
                 # No need to check the other edges
                 break                
             end
         end
+        println()
     end
     println("End Profit from Taxes : $(current_obj)")
-    println("Tested neighbors : $iteration")
+    println("Iterations : $iteration")
+    println("Tested neighbors : $tested")
     return taxes, current_obj
 end
 
@@ -76,3 +105,6 @@ test_instance = Instance(K, n_k, n, A_1, A_2)
 #     random_taxes, obj = generate_random_taxes(test_instance)
 # end
 # show_positive_taxes(random_taxes)
+
+n = test_instance.n
+taxes, obj = local_search(test_instance, zeros(n, n))
