@@ -159,7 +159,6 @@ end
 
 
 function heuristic(instance::Instance, verbose::Bool=false)
-    previous_val = 0
     n = instance.n
     nb_start = 5
     nb_iter = 5
