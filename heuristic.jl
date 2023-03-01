@@ -6,30 +6,6 @@ using Random
 
 include("instance.jl")
 
-function compute_shortest_path_with_pl(instance::Instance, journey_index::Int64, taxes)
-    # to finish 
-
-    # Model
-    model = Model(CPLEX.Optimizer) 
-    
-    # Variables
-    @variable(model, x1[(i,j) in eachindex(instance.A1)] >= 0)
-    @variable(model, x2[(i,j) in eachindex(instance.A2)] >= 0)
-
-    # add constraints
-
-    # Objective
-    @objective(
-        model, 
-        Min, 
-        (
-            sum(x1[i, j]*(instance.A1[i, j] + get(taxes, (i, j), 0)) for (i, j) in keys(instance.A1)) 
-            + sum(x2[i, j]*instance.A2[i, j] for (i, j) in keys(instance.A2))
-        )
-    )
-
-end
-
 
 function compute_paths_through_a(instance::Instance, arc::Tuple{Int, Int}, taxes::Array{Float64, 2})::Dict{}
     # returns a dictionnary with couples (origin, destination) as keys, and the max tax for (ori, des) on the arc as value
@@ -49,9 +25,7 @@ function compute_paths_through_a(instance::Instance, arc::Tuple{Int, Int}, taxes
             if index1 + 1 == index2
                 # if the shortest_path visits n2 right after n1, we add it to our list
                 dist = dijk.dists[des]
-                # cost, adj_mat[n1, n2] = adj_mat[n1, n2], inf
                 next_dist = dijkstra_shortest_paths(instance.g, ori, ad_mat_without_taxed_arcs).dists[des]
-                # adj_mat[n1, n2] = cost
                 # the maximum tax is the gap between the cost of the second best path and the first one
                 paths_through_a[(ori, des)] = next_dist - dist
             end
@@ -107,7 +81,7 @@ function show_positive_taxes(taxes::Array{Float64, 2})
 end
 
 
-function increase_taxes(instance::Instance, taxes::Array{Float64, 2})::Array{Float64, 2}
+function increase_taxes(instance::Instance, taxes::Array{Float64, 2}, verbose::Bool)::Array{Float64, 2}
     for arc in shuffle!(collect(keys(instance.A1)))
         # For each arc in A1, given the other taxes,
         # we maximise the benefit made by this arc
@@ -137,7 +111,7 @@ function increase_taxes(instance::Instance, taxes::Array{Float64, 2})::Array{Flo
                 if obj < previous_obj
                     # undo changes, because they worsened the objective
                     taxes[n1, n2] = previous_tax
-                else
+                elseif verbose
                     println("raising tax on arc ($n1, $n2) from $(round(Int, previous_tax)) to $(round(Int, current_tax))")
                 end
             end
@@ -160,7 +134,7 @@ end
 
 function heuristic(instance::Instance, verbose::Bool=false)
     n = instance.n
-    nb_start = 5
+    nb_start = 50
     nb_iter = 5
     best_result = 0
     best_taxes = zeros(n, n)
@@ -169,7 +143,7 @@ function heuristic(instance::Instance, verbose::Bool=false)
         taxes = zeros(n, n)
         current_val = 0
         for j in 1:nb_iter
-            taxes = increase_taxes(instance, taxes)
+            taxes = increase_taxes(instance, taxes, verbose)
             current_val = compute_obj_value(test_instance, taxes, (j==nb_iter && verbose))
         end
         if current_val > best_result
