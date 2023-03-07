@@ -144,6 +144,10 @@ end
 
 
 function heuristic(instance::Instance, verbose::Bool=false)
+<<<<<<< HEAD
+=======
+    previous_val = 0
+>>>>>>> b742c29f139f42e6be394807715c91b57586e2bd
     n = instance.n
     nb_start = 100
     nb_iter = 5
