@@ -1,4 +1,4 @@
-include("data/taxe_grille_4x5.txt")
+include("data/taxe_grille_7x11.txt")
 include("heuristic.jl")
 
 test_instance = Instance(K, n_k, n, A_1, A_2)
