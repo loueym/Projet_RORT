@@ -3,6 +3,7 @@
 using JuMP
 using CPLEX
 using Random
+using Statistics
 
 include("instance.jl")
 
@@ -10,9 +11,8 @@ include("instance.jl")
 function compute_paths_through_a(instance::Instance, arc::Tuple{Int, Int}, taxes::Array{Float64, 2})::Dict{}
     # returns a dictionnary with couples (origin, destination) as keys, and the max tax for (ori, des) on the arc as value
     n = instance.n
-    n = instance.n
     adj_mat = build_dist_mat(instance.n, instance.A1, instance.A2, taxes)
-    ad_mat_without_taxed_arcs = build_dist_mat(instance.n, instance.A1, instance.A2, INF .* ones(n, n))
+    # ad_mat_without_taxed_arcs = build_dist_mat(instance.n, instance.A1, instance.A2, INF .* ones(n, n))
     paths_through_a = Dict{}()
     for i in 1:instance.K
         ori = instance.origins[i]
@@ -26,7 +26,12 @@ function compute_paths_through_a(instance::Instance, arc::Tuple{Int, Int}, taxes
             if index1 + 1 == index2
                 # if the shortest_path visits n2 right after n1, we add it to our list
                 dist = dijk.dists[des]
-                next_dist = dijkstra_shortest_paths(instance.g, ori, ad_mat_without_taxed_arcs).dists[des]
+                
+                cost, adj_mat[n1, n2] = adj_mat[n1, n2], INF
+                next_dist = dijkstra_shortest_paths(instance.g, ori, adj_mat).dists[des]
+                adj_mat[n1, n2] = cost
+                # next_dist = dijkstra_shortest_paths(instance.g, ori, ad_mat_without_taxed_arcs).dists[des]
+
                 # the maximum tax is the gap between the cost of the second best path and the first one
                 paths_through_a[(ori, des)] = next_dist - dist
             end
@@ -83,6 +88,8 @@ end
 
 
 function increase_taxes(instance::Instance, taxes::Array{Float64, 2}, verbose::Bool)::Array{Float64, 2}
+    p = 1 # probability of keeping a tax that does not change the objective
+
     for arc in shuffle!(collect(keys(instance.A1)))
         # For each arc in A1, given the other taxes,
         # we maximise the benefit made by this arc
@@ -112,6 +119,9 @@ function increase_taxes(instance::Instance, taxes::Array{Float64, 2}, verbose::B
                 if obj < previous_obj
                     # undo changes, because they worsened the objective
                     taxes[n1, n2] = previous_tax
+                elseif obj - previous_obj <= EPS && rand() < 1 - p
+                    # if the objective is the same, we keep changes with probability p
+                    taxes[n1, n2] = previous_tax
                 elseif verbose
                     println("raising tax on arc ($n1, $n2) from $(round(Int, previous_tax)) to $(round(Int, current_tax))")
                 end
@@ -136,23 +146,26 @@ end
 function heuristic(instance::Instance, verbose::Bool=false)
     previous_val = 0
     n = instance.n
-    nb_start = 50
+    nb_start = 100
     nb_iter = 5
     best_result = 0
     best_taxes = zeros(n, n)
+    all_taxes = zeros(nb_start)
     for i in 1:nb_start
-        println("Start n°", i)
         taxes = zeros(n, n)
         current_val = 0
         for j in 1:nb_iter
             taxes = increase_taxes(instance, taxes, verbose)
             current_val = compute_obj_value(test_instance, taxes, (j==nb_iter && verbose))
         end
+        all_taxes[i] = current_val
         if current_val > best_result
             best_result = current_val
             best_taxes = copy(taxes)
         end
     end
+
+    println("Moyenne des profits : ", mean(all_taxes), " et écart-type : ", std(all_taxes))
 
     # Undo the effect of epsilon
     clean_taxes(best_taxes)
