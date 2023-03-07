@@ -6,72 +6,7 @@ using Random
 using Statistics
 
 include("instance.jl")
-
-
-function compute_paths_through_a(instance::Instance, arc::Tuple{Int, Int}, taxes::Array{Float64, 2})::Dict{}
-    # returns a dictionnary with couples (origin, destination) as keys, and the max tax for (ori, des) on the arc as value
-    n = instance.n
-    adj_mat = build_dist_mat(instance.n, instance.A1, instance.A2, taxes)
-    # ad_mat_without_taxed_arcs = build_dist_mat(instance.n, instance.A1, instance.A2, INF .* ones(n, n))
-    paths_through_a = Dict{}()
-    for i in 1:instance.K
-        ori = instance.origins[i]
-        des = instance.destinations[i]
-        dijk = dijkstra_shortest_paths(instance.g, ori, adj_mat)
-        shortest_path = enumerate_paths(dijk, des)
-        n1, n2 = arc
-        if n1 in shortest_path && n2 in shortest_path
-            index1 = findfirst(item -> item == n1, shortest_path)
-            index2 = findfirst(item -> item == n2, shortest_path)
-            if index1 + 1 == index2
-                # if the shortest_path visits n2 right after n1, we add it to our list
-                dist = dijk.dists[des]
-                
-                cost, adj_mat[n1, n2] = adj_mat[n1, n2], INF
-                next_dist = dijkstra_shortest_paths(instance.g, ori, adj_mat).dists[des]
-                adj_mat[n1, n2] = cost
-                # next_dist = dijkstra_shortest_paths(instance.g, ori, ad_mat_without_taxed_arcs).dists[des]
-
-                # the maximum tax is the gap between the cost of the second best path and the first one
-                paths_through_a[(ori, des)] = next_dist - dist
-            end
-        end
-    end
-    return paths_through_a
-end
-
-
-function compute_obj_value(instance::Instance, taxes::Array{Float64, 2}, show_result::Bool=false)
-    val = 0
-    n = instance.n
-    adj_mat = build_dist_mat(n, instance.A1, instance.A2, taxes)
-    for i in 1:instance.K
-        ori = instance.origins[i]
-        des = instance.destinations[i]
-        demand = instance.demands[i]
-        dijk = dijkstra_shortest_paths(instance.g, ori, adj_mat)
-        shortest_path = enumerate_paths(dijk, des)
-        prev_n = shortest_path[1]
-        if show_result
-            println("Shortest path from ", ori, " to ", des, " is ", shortest_path, " with cost ", dijk.dists[des])
-        end
-        taxes_along_path = 0
-        for n in shortest_path[2:length(shortest_path)]
-            if show_result
-                println("for arc (", prev_n, ", ", n, "), taxes = ", taxes[prev_n, n])
-            end
-            taxes_along_path += taxes[prev_n, n] * demand
-            prev_n = n
-        end
-        val += taxes_along_path
-        if show_result
-            println("-> taxes along shortest path are ", taxes_along_path)
-            println()
-        end
-    end
-    return val
-end
-
+include("utils.jl")
 
 function show_positive_taxes(taxes::Array{Float64, 2})
     print("positive taxes: ")
@@ -144,10 +79,6 @@ end
 
 
 function heuristic(instance::Instance, verbose::Bool=false)
-<<<<<<< HEAD
-=======
-    previous_val = 0
->>>>>>> b742c29f139f42e6be394807715c91b57586e2bd
     n = instance.n
     nb_start = 100
     nb_iter = 5
