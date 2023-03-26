@@ -67,6 +67,17 @@ function increase_taxes(instance::Instance, taxes::Array{Float64, 2}, verbose::B
     return taxes
 end
 
+function generate_taxes(instance::Instance, nb_incr::Int, verbose::Bool=false)
+    n = instance.n
+    taxes = zeros(n, n)
+    current_val = 0
+    for j in 1:nb_incr
+        taxes = increase_taxes(instance, taxes, verbose)
+        current_val = compute_obj_value(instance, taxes, (j==nb_incr && verbose))
+    end
+    return taxes, current_val
+end
+
 
 function clean_taxes(taxes::Array{Float64, 2})
     n, m = size(taxes)
@@ -77,21 +88,39 @@ function clean_taxes(taxes::Array{Float64, 2})
     end
 end
 
+function generate_random_taxes(instance::Instance)
+    # We generate different solutions and take the best one
+    n = instance.n
+    min_T_max = Int(minimum(instance.T_max))
+    max_T_max = Int(maximum(instance.T_max))
+    taxes = zeros(max_T_max - min_T_max, n, n)
+    # For each taxable edge, we choose a random value
+    for e in shuffle!(collect(keys(instance.A1)))
+        for M in 1:(max_T_max - min_T_max)
+            taxes[M, e[1], e[2]] = rand(1:M)
+        end
+    end
+    obj = [compute_obj_value(instance, taxes[i, :, :]) for i in 1:(max_T_max - min_T_max)]
+    best_taxes = argmax(obj)
+    println("Profit from Taxes : $(obj) with best at $(obj[best_taxes])")
+    return taxes[best_taxes, :, :], obj[best_taxes]
+end
 
 function heuristic(instance::Instance, verbose::Bool=false)
     n = instance.n
-    nb_start = 100
+    nb_start = 400
     nb_iter = 5
     best_result = 0
     best_taxes = zeros(n, n)
     all_taxes = zeros(nb_start)
     for i in 1:nb_start
-        taxes = zeros(n, n)
         current_val = 0
-        for j in 1:nb_iter
-            taxes = increase_taxes(instance, taxes, verbose)
-            current_val = compute_obj_value(test_instance, taxes, (j==nb_iter && verbose))
+        if rand() < 0.3
+            taxes, current_val = generate_taxes(instance, nb_iter, verbose)
+        else
+            taxes, current_val = generate_random_taxes(instance)
         end
+        taxes, current_val = local_search(instance, taxes)
         all_taxes[i] = current_val
         if current_val > best_result
             best_result = current_val

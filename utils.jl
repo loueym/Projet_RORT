@@ -120,7 +120,7 @@ function local_search(instance::Instance, start_taxes::Matrix, naive::Bool=false
 
     # While we improve our objective
     while improvement > 0
-        println("\nIteration $iteration \n")
+        # println("\nIteration $iteration \n")
         # We choose the first random (strictly) improving move
         for a in shuffle(taxable_arcs)
             iteration += 1
@@ -187,8 +187,8 @@ function local_search(instance::Instance, start_taxes::Matrix, naive::Bool=false
         end
         println()
     end
-    println("End Profit from Taxes : $(current_obj)")
-    println("Iterations : $iteration")
-    println("Tested neighbors : $tested")
+    # println("End Profit from Taxes : $(current_obj)")
+    # println("Iterations : $iteration")
+    # println("Tested neighbors : $tested")
     return taxes, current_obj
 end
